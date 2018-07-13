@@ -91,7 +91,8 @@ def datingClassTest():
     print "the total error rate is: %f" % (errorCount / float(numTestVecs))
     print errorCount
 
-
+def img2vec(filename):
+    returnMat =numpy.zeros((1, 1024))
 # writeData('datingTestSet.txt')
 
 # group, labels = creatDateSet()
