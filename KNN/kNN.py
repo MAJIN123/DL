@@ -10,8 +10,7 @@ import operator
 import random
 import matplotlib
 import matplotlib.pyplot as plt
-
-
+from os import listdir
 def creatDateSet():
     group = numpy.array([[1.0, 1.1], [1.0, 1.0], [0, 0], [0, 0.1]])
     labels = ['A', 'A', 'B', 'B']
@@ -87,12 +86,49 @@ def datingClassTest():
     for i in range(numTestVecs):
         classifierResult = classify0(normMat[i, :], normMat[numTestVecs:m, :], datingLabels[numTestVecs:m], 3)
         print "the classifier came back with: %d, the real answer is: %d" % (classifierResult, datingLabels[i])
-        if (classifierResult != datingLabels[i]): errorCount += 1.0
+        if classifierResult != datingLabels[i]: errorCount += 1.0
     print "the total error rate is: %f" % (errorCount / float(numTestVecs))
     print errorCount
 
+
 def img2vec(filename):
-    returnMat =numpy.zeros((1, 1024))
+    returnMat = numpy.zeros((1, 1024))
+    fr = open(filename)
+    for i in range(32):
+        line = fr.readline()
+        for j in range(32):
+            returnMat[0][32 * i + j] = line[j]
+    return returnMat
+
+
+def handwritingClassTest():
+    hwLabels = []
+    train_filelist = listdir('digits/trainingDigits')
+    m = len(train_filelist)
+    trainMat = numpy.zeros((m, 1024))
+    for i in range(m):
+        filename = train_filelist[i]
+        filestr = filename.split('.')[0]
+        hwLabels.append(int(filestr.split('_')[0]))
+        trainMat[i, :] = img2vec('digits/trainingDigits/%s' % filename)
+
+    test_filelist = listdir('digits/testDigits')
+    errorCount = 0.0
+    for i in range(len(test_filelist)):
+        filename = test_filelist[i]
+        filestr = filename.split('.')[0]
+        label = int(filestr.split('_')[0])
+        vecUnderTest = img2vec('digits/testDigits/%s' % filename)
+        classifierRes = classify0(vecUnderTest, trainMat, hwLabels, 3)
+        print "the classifier came back with : %d, the real answer is: %d" % (classifierRes, label)
+        if classifierRes != label:
+            errorCount += 1
+    print "\nthe total number of errors is: %d" % errorCount
+    print "\nthe total error rate is: %f" % (errorCount / float(len(test_filelist)))
+
+
+
+
 # writeData('datingTestSet.txt')
 
 # group, labels = creatDateSet()
@@ -111,5 +147,6 @@ def img2vec(filename):
 # # ax.scatter(normMat[:, 1], normMat[:, 2], 15.0 * numpy.array(normMat), 15.0 * numpy.array(normMat))
 # ax.scatter(normMat[:, 1], normMat[:, 2])
 # plt.show()
-datingClassTest()
+# datingClassTest()
 # print(datingLabels)
+handwritingClassTest()
