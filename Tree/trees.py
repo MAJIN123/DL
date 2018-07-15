@@ -7,6 +7,7 @@
 
 from math import log
 import operator
+import treePlotter
 
 
 def calShannonEnt(dataSet):
@@ -90,5 +91,35 @@ def creatTree(dataSet, labels):
     return myTree
 
 
+def classify(inputTree, featLabels, testVec):
+    firstStr = inputTree.keys()[0]
+    secondDict = inputTree[firstStr]
+    featIndex = featLabels.index(firstStr)
+    for key in secondDict:
+        if key == testVec[featIndex]:
+            if type(secondDict[key]).__name__ == 'dict':
+                classLabel = classify(secondDict[key], featLabels, testVec)
+            else:
+                classLabel = secondDict[key]
+    return classLabel
+
+
+def storeTree(inputTree, filename):
+    import pickle
+    fw = open(filename, 'w')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+
+def loadTree(filename):
+    import pickle
+    fr = open(filename)
+    return pickle.load(fr)
+
+
 d, l = creatDataSet()
-print creatTree(d, l)
+# treePlotter.createPlot(creatTree(d, l))
+tree = (creatTree(d, l))
+storeTree(tree, 'tree')
+print(tree)
+print(loadTree('tree'))
