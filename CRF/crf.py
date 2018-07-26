@@ -9,7 +9,7 @@ import datetime
 import random
 import numpy as np
 from collections import defaultdict
-
+from scipy.misc import logsumexp
 class dataSet(object):
     def __init__(self, filename):
         self.filename = filename
@@ -151,6 +151,41 @@ class CRF(object):
         return sum(scores)
 
     def forward(self,sentence):
+        pathScores = np.zeros(len(sentence),len(self.tags))
+
+        pathScores[0] = [self.score(self.creatFeatureTemplate(sentence,0,self.BOS,tag)) for tag in self.tags]
+        for i in range(1,len(sentence)):
+            unigramScore = np.array([self.score(self.creatUnigramFeature(sentence,i,tag)) for tag in self.tag])
+            scores = self.bigramScore + unigramScore[:,None]
+            pathScores[i] = logsumexp(pathScores[i-1]+scores,axis = 1)
+
+            return pathScores
+    def backWard(self,sentence):
+        pathScores = np.zeros(len(sentence),len(self.tags))
+
+        for i in reversed(range(len(sentence)-1)):
+            unigramScore = np.array([self.score(self.creatUnigramFeature(sentence,i+1,tag)) for tag in self.tags])
+            scores = self.bigramScore.T+ unigramScore
+            pathScores[i] = logsumexp(pathScores[i+1]+ scores,axis=1)
+
+        return pathScores
+
+    def updataGradient(self,sentence,tags):
+        for i in range(len(sentence)):
+            if i == 1:
+                preTag = self.BOS
+            else:
+                preTag = tags[i-1]
+            curTag = tags[i]
+            feature = self.creatFeatureTemplate(sentence,i,preTag,curTag)
+            for f in feature:
+                if f in self.features:
+                    self.g[self.features[f]] += 1
+
+        alpha = self.forward(sentence)
+        beta = self.backward(sentence)
+        logZ = logsumexp(alpha[-1])
+
 
     def predict(self,sentence):
         NumOfWords = len(sentence)
