@@ -9,6 +9,7 @@ import datetime
 import random
 import numpy as np
 from Config import config
+import pickle
 from collections import defaultdict
 from scipy.misc import logsumexp
 
@@ -111,9 +112,9 @@ class liner_model(object):
         return template
 
     def creat_feature_space(self):
-        T = len(self.trainData.sentnces)
+        T = len(self.trainData.sentences)
         for i in range(T):
-            sentence = self.trainData.sentnces[i]
+            sentence = self.trainData.sentences[i]
             tags = self.trainData.tags[i]
             for j in range(len(sentence)):
                 templates = self.create_feature_template(sentence, tags[j], j)
@@ -145,20 +146,20 @@ class liner_model(object):
             [self.dot(self.create_feature_template(sentence, tag, position), averaged) for tag in self.tags])
         return self.tags[tagid]
 
-    def evaluate(self,data,averaged=False):
-        total_num,correct_num = 0,0
+    def evaluate(self, data, averaged=False):
+        total_num, correct_num = 0, 0
         for i in range(len(data.sentences)):
             sentence = data.sentences[i]
             tags = data.tags[i]
             total_num += len(tags)
             for j in range(len(tags)):
-                predict_tag = self.predict(sentence,j,averaged)
+                predict_tag = self.predict(sentence, j, averaged)
                 if predict_tag == tags[j]:
                     correct_num += 1
 
-        return (correct_num,total_num,correct_num/total_num)
+        return (correct_num, total_num, correct_num / total_num)
 
-    def online_train(self,iterator=20,averaged=False,shuffle=False,exitor=20):
+    def online_train(self, iterator=20, averaged=False, shuffle=False, exitor=20):
         max_dev_p = 0
         max_iter = -1
         counter = 0
@@ -168,18 +169,18 @@ class liner_model(object):
             print('using v to predic dev data...')
         for iter in range(iterator):
             starttime = datetime.datetime.now()
-            print('iterator:%d'%(iter))
+            print('iterator:%d' % (iter))
             if shuffle == True:
                 print('\tshuffle the train data...')
                 random.shuffle(data)
             for i in range(len(data)):
-                sentence =data[i][0]
+                sentence = data[i][0]
                 j = data[i][1]
                 gold_tag = data[j][2]
-                predict_tag = self.predict(sentence,j,averaged)
+                predict_tag = self.predict(sentence, j, averaged)
                 if predict_tag != gold_tag:
-                    feature_loss = self.create_feature_template(sentence,predict_tag,j)
-                    feature_gold = self.create_feature_template(sentence,gold_tag,j)
+                    feature_loss = self.create_feature_template(sentence, predict_tag, j)
+                    feature_gold = self.create_feature_template(sentence, gold_tag, j)
                     for f in feature_loss:
                         if f in self.features.keys():
                             self.weights[self.features[f]] -= 1
@@ -213,8 +214,18 @@ class liner_model(object):
                 break
         print('iterator = %d , max_dev_precision = %f' % (max_iter, max_dev_p))
 
-if __name__ == '__main__':
+    def dump(self,file):
+        with open(file,'w') as fw:
+            pickle.dump(self,fw)
 
+    @classmethod
+    def load(cls,file):
+        with open(file,'rb') as fr:
+            lm = pickle.load(fr)
+        return lm
+
+
+if __name__ == '__main__':
     train_data_file = config['train_data_file']
     dev_data_file = config['dev_data_file']
     test_data_file = config['test_data_file']
@@ -229,6 +240,3 @@ if __name__ == '__main__':
     lm.online_train(iterator, averaged, shuffle, exitor)
     endtime = datetime.datetime.now()
     print("executing time is " + str((endtime - starttime)))
-
-
-
