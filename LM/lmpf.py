@@ -182,7 +182,7 @@ class liner_model(object):
                 sentence = data[i][0]
                 j = data[i][1]
                 gold_tag = data[i][2]
-                predict_tag = self.predict(sentence, j, False)
+                predict_tag = self.predict(sentence, j, averaged)
                 if predict_tag != gold_tag:
                     update_time += 1
                     feature = self.create_feature_template(sentence, j)
@@ -202,39 +202,39 @@ class liner_model(object):
                             self.update_v(index, update_time, last_w_value)
 
                     # 本次迭代完成
-                    current_update_times = update_time  # 本次更新所在的次数
-                    for i in range(len(self.v)):
-                        last_w_value = self.weights[i]
-                        last_update_times = self.update_times[i]  # 上一次更新所在的次数
-                        if current_update_times != last_update_times:
-                            self.update_times[i] = current_update_times
-                            self.v[i] += (current_update_times - last_update_times - 1) * last_w_value + self.weights[i]
+            current_update_times = update_time  # 本次更新所在的次数
+            for i in range(len(self.v)):
+                last_w_value = self.weights[i]
+                last_update_times = self.update_times[i]  # 上一次更新所在的次数
+                if current_update_times != last_update_times:
+                    self.update_times[i] = current_update_times
+                    self.v[i] += (current_update_times - last_update_times - 1) * last_w_value + self.weights[i]
 
-                    train_correct_num, total_num, train_precision = self.evaluate(self.train_data, False)
-                    print('\t' + 'train准确率：%d / %d = %f' % (train_correct_num, total_num, train_precision))
-                    dev_correct_num, dev_num, dev_precision = self.evaluate(self.dev_data, averaged)
-                    print('\t' + 'dev准确率：%d / %d = %f' % (dev_correct_num, dev_num, dev_precision))
+            train_correct_num, total_num, train_precision = self.evaluate(self.train_data, False)
+            print('\t' + 'train准确率：%d / %d = %f' % (train_correct_num, total_num, train_precision))
+            dev_correct_num, dev_num, dev_precision = self.evaluate(self.dev_data, averaged)
+            print('\t' + 'dev准确率：%d / %d = %f' % (dev_correct_num, dev_num, dev_precision))
 
-                    if self.test_data != None:
-                        test_correct_num, test_num, test_precision = self.evaluate(self.test_data, averaged)
-                        print('\t' + 'test准确率：%d / %d = %f' % (test_correct_num, test_num, test_precision))
+            if self.test_data != None:
+                test_correct_num, test_num, test_precision = self.evaluate(self.test_data, averaged)
+                print('\t' + 'test准确率：%d / %d = %f' % (test_correct_num, test_num, test_precision))
 
-                    if dev_precision > (max_dev_precision):
-                        max_dev_precision = dev_precision
-                        max_iterator = iter
-                        counter = 0
-                    else:
-                        counter += 1
-                        # self.save('./result.txt')
-                    endtime = datetime.datetime.now()
-                    print("\titeration executing time is " + str((endtime - starttime)) + " s")
+            if dev_precision > (max_dev_precision):
+                max_dev_precision = dev_precision
+                max_iterator = iter
+                counter = 0
+            else:
+                counter += 1
+                # self.save('./result.txt')
+            endtime = datetime.datetime.now()
+            print("\titeration executing time is " + str((endtime - starttime)) + " s")
 
-                    if train_correct_num == total_num:
-                        break
+            if train_correct_num == total_num:
+                break
 
-                    if counter >= exitor:
-                        break
-                print('iterator = %d , max_dev_precision = %f' % (max_iterator, max_dev_precision))
+            if counter >= exitor:
+                break
+        print('iterator = %d , max_dev_precision = %f' % (max_iterator, max_dev_precision))
 
     def update_v(self, index, update_time, last_w_value):
         last_update_time = self.update_times[index]  # 上一次更新所在的次数
