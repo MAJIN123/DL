@@ -34,7 +34,7 @@ args = parser.parse_args()
 if args.optimize:
     from ollm import LogLinearModel
 else:
-    from llm import LogLinearModel
+    from zhangyu_llm import LogLinearModel
 
 # 根据参数读取配置
 config = Config(args.bigdata)

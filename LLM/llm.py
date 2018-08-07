@@ -13,7 +13,7 @@ from scipy.misc import logsumexp
 import pickle
 
 
-class LoglinerModel(object):
+class LogLinearModel(object):
 
     def __init__(self, nt):
         self.nt = nt
@@ -56,7 +56,7 @@ class LoglinerModel(object):
                 if not anneal:
                     self.update(batch, lmbda, n, eta)
                 else:
-                    self.update(batch, lmbda, n, eta * decay ** (update_n / batch_n))
+                    self.update(batch, lmbda, n, eta * decay ** ((update_n + 1) / batch_n))
                 update_n += 1
 
             print("Epoch %d / %d: " % (epoch, epochs))
@@ -78,18 +78,19 @@ class LoglinerModel(object):
         print("mean time of each is %s s" % (total_time / iter_time))
 
     def evaluate(self, data):
-        tp, total = 0, 0
+        tp, total, precision = 0, 0, 0.0
 
         for wordseq, tiseq in data:
             total += len(wordseq)
             piseq = np.array([self.predict(wordseq, i) for i in range(len(wordseq))])
             tp += np.sum(tiseq == piseq)
 
-        return tp, total, tp / total
+        precision = float(tp) / total
+        return tp, total, precision
 
     def predict(self, wordseq, i):
         fvs = [self.create_feature_template(wordseq, i, ti) for ti in range(self.nt)]
-        scores = np.array(self.score(fv) for fv in fvs)
+        scores = np.array([self.score(fv) for fv in fvs])
         return np.argmax(scores)
 
     def update(self, batch, lmbda, n, eta):
@@ -110,11 +111,11 @@ class LoglinerModel(object):
                 for fi in fiseq:
                     gradients[fi] -= p
 
-            if lmbda:
-                self.W *= (1 - eta * lmbda / n)
+        if lmbda:
+            self.W *= (1 - eta * lmbda / n)
 
-            for k, v in gradients.items():
-                self.W[k] += eta * v
+        for k, v in gradients.items():
+            self.W[k] += eta * v
 
     def dump(self, file):
         with open(file, 'wb') as fw:
