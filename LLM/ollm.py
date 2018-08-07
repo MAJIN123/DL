@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2018/8/6 10:21
+# @Time    : 2018/8/7 14:27
 # @Author  : Maloney
 # @Site    : jma@192.168.126.124
-# @File    : llm.py
+# @File    : ollm.py
 # @Software: PyCharm
 
 import numpy as np
@@ -22,7 +22,7 @@ class LoglinerModel(object):
         self.epsilon = list({
             f for wordseq, tagseq in data
             for i, ti in enumerate(tagseq)
-            for f in self.create_feature_template(wordseq, i, ti)
+            for f in self.create_feature_template(wordseq, i)
 
         })
         self.fdict = {f: i for i, f in enumerate(self.epsilon)}
@@ -88,27 +88,26 @@ class LoglinerModel(object):
         return tp, total, tp / total
 
     def predict(self, wordseq, i):
-        fvs = [self.create_feature_template(wordseq, i, ti) for ti in range(self.nt)]
-        scores = np.array(self.score(fv) for fv in fvs)
+        fv = self.create_feature_template(wordseq, i)
+        scores = self.score(fv)
         return np.argmax(scores)
 
     def update(self, batch, lmbda, n, eta):
         gradients = defaultdict(float)
 
         for wordseq, i, ti in batch:
-            fv = self.create_feature_template(wordseq, i, ti)
-            fseq = [self.fdict[f] for f in fv if f in self.fdict]
-            for fi in fseq:
-                gradients[fi] += 1
+            fv = self.create_feature_template(wordseq, i)
+            fiseq = [self.fdict[f] for f in fv if f in self.fdict]
+            # for fi in fseq:
+            #     gradients[fi] += 1
 
-            fvs = [self.create_feature_template(wordseq, i, ti) for ti in range(self.nt)]
-            scores = np.array([self.score(fv) for fv in fvs])
+            # fvs = [self.create_feature_template(wordseq, i, ti) for ti in range(self.nt)]
+            scores = self.score(fv)
             probs = np.exp(scores - logsumexp(scores))
 
-            for fv, p in zip(fvs, probs):
-                fiseq = (self.fdict[f] for f in fv if f in self.fdict)
-                for fi in fiseq:
-                    gradients[fi] -= p
+            for fi in fiseq:
+                gradients[fi, ti] += 1
+                gradients[fi] -= probs
 
             if lmbda:
                 self.W *= (1 - eta * lmbda / n)
@@ -123,14 +122,14 @@ class LoglinerModel(object):
     @classmethod
     def load(cls, file):
         with open(file, 'rb') as fr:
-            llm = pickle.load(fr)
-        return llm
+            ollm = pickle.load(fr)
+        return ollm
 
     def score(self, fv):
-        scores = [self.W[self.fdict[f]] for f in fv if f in self.fdict]
-        return sum(scores)
+        scores = np.array([self.W[self.fdict[f]] for f in fv if f in self.fdict])
+        return np.sum(scores, axis=0)
 
-    def create_feature_template(self, wordseq, i, ti):
+    def create_feature_template(self, wordseq, i):
         word = wordseq[i]
         prev_word = wordseq[i - 1] if i > 0 else '^^'
         next_word = wordseq[i + 1] if i < len(wordseq) - 1 else '$$'
@@ -140,29 +139,29 @@ class LoglinerModel(object):
         last_char = word[-1]
 
         fvector = []
-        fvector.append(('02', ti, word))
-        fvector.append(('03', ti, prev_word))
-        fvector.append(('04', ti, next_word))
-        fvector.append(('05', ti, word, prev_char))
-        fvector.append(('06', ti, word, next_char))
-        fvector.append(('07', ti, first_char))
-        fvector.append(('08', ti, last_char))
+        fvector.append(('02', word))
+        fvector.append(('03', prev_word))
+        fvector.append(('04', next_word))
+        fvector.append(('05', word, prev_char))
+        fvector.append(('06', word, next_char))
+        fvector.append(('07', first_char))
+        fvector.append(('08', last_char))
 
         for char in word[1:-1]:
-            fvector.append(('09', ti, char))
-            fvector.append(('10', ti, first_char, char))
-            fvector.append(('11', ti, last_char, char))
+            fvector.append(('09', char))
+            fvector.append(('10', first_char, char))
+            fvector.append(('11', last_char, char))
         if len(word) == 1:
-            fvector.append(('12', ti, word, prev_char, next_char))
+            fvector.append(('12', word, prev_char, next_char))
         for i in range(1, len(word)):
             prev_char, char = word[i - 1], word[i]
             if prev_char == char:
-                fvector.append(('13', ti, char, 'consecutive'))
+                fvector.append(('13', char, 'consecutive'))
             if i <= 4:
-                fvector.append(('14', ti, word[:i]))
-                fvector.append(('15', ti, word[-i:]))
+                fvector.append(('14', word[:i]))
+                fvector.append(('15', word[-i:]))
         if len(word) <= 4:
-            fvector.append(('14', ti, word))
-            fvector.append(('15', ti, word))
+            fvector.append(('14', word))
+            fvector.append(('15', word))
 
         return fvector
