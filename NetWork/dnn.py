@@ -9,12 +9,13 @@ import numpy as np
 import random
 import mnist_loader
 
+
 def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
 
 
 def sigmoid_prime(z):
-    return sigmoid(z) * (1 - sigmoid())
+    return sigmoid(z) * (1 - sigmoid(z))
 
 
 class Network(object):
@@ -26,13 +27,13 @@ class Network(object):
         self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
 
     def feedforword(self, a):
-        for b, w in zip(self.weights, self.biases):
+        for w, b in zip(self.weights, self.biases):
             a = sigmoid(np.dot(w, a) + b)
         return a
 
     def updata_mini_batch(self, mini_batch, eta):
-        nable_b = [np.zeros(b.shape()) for b in self.biases]
-        nable_w = [np.zeros(w.shape()) for w in self.weights]
+        nable_b = [np.zeros(b.shape) for b in self.biases]
+        nable_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in mini_batch:
             delta_b, delta_w = self.backprop(x, y)
             nable_b = [nb + dnb for nb, dnb in zip(nable_b, delta_b)]
@@ -62,8 +63,8 @@ class Network(object):
         return (output - y)
 
     def backprop(self, x, y):
-        n_b = [np.zeros(b.shape()) for b in self.biases]
-        n_w = [np.zeros(w.shape()) for w in self.weights]
+        n_b = [np.zeros(b.shape) for b in self.biases]
+        n_w = [np.zeros(w.shape) for w in self.weights]
 
         # feedforword
         activation = x
@@ -79,16 +80,16 @@ class Network(object):
         n_b[-1]=delta
         n_w[-1]=np.dot(delta,activations[-2].T)
 
-        for i in xrange(2,self.num_layers):
+        for i in range(2,self.num_layers):
             z = zs[-i]
             delta = np.dot(self.weights[-i+1].T,delta)*sigmoid_prime(z)
             n_b[-i] = delta
-            n_w[-i] = np.dot(delta,activations[-i-1])
+            n_w[-i] = np.dot(delta,activations[-i-1].T)
 
         return (n_b,n_w)
 
 train,val,test = mnist_loader.load_data_wrapper()
-net = Network([784,30,10])
+net = Network([784,100,10])
 net.SGD(train,30,10,3.0,test)
 
 
