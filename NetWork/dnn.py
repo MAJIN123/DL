@@ -9,6 +9,7 @@ import numpy as np
 import random
 import mnist_loader
 
+import matplotlib.pyplot as plt
 
 def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
@@ -45,6 +46,9 @@ class Network(object):
         if test_data:
             n_test = len(test_data)
         n = len(training_data)
+
+        x,X= [],[]
+
         for j in xrange(epochs):
             random.shuffle(training_data)
             mini_batches = [training_data[i:i + mini_batch_size] for i in xrange(0, n, mini_batch_size)]
@@ -55,9 +59,21 @@ class Network(object):
             else:
                 print("Epoch {0} complete".format(j))
 
+            x.append(j+1)
+            X.append(self.loss(training_data))
+        plt.plot(x,X)
+        plt.show()
+
     def evaluate(self, test_data):
         test_results = [(np.argmax(self.feedforword(x)), y) for x, y in test_data]
         return sum(int(x == y) for (x, y) in test_results)
+
+    def loss(self, data):
+        # p_data = [[x,np.argmax(y)] for x,y in data]
+        # for x, y in data:
+        #     print((np.argmax(self.feedforword(x)),np.argmax(y)))
+        results = [(np.argmax(self.feedforword(x)), np.argmax(y)) for x, y in data]
+        return sum(int(x != y)**2 for (x, y) in results)/2
 
     def cost_derivative(self,output,y):
         return (output - y)
@@ -91,5 +107,8 @@ class Network(object):
 train,val,test = mnist_loader.load_data_wrapper()
 net = Network([784,100,10])
 net.SGD(train,30,10,3.0,test)
+# train =[(1,1)]
+# net = Network([1,1,1])
+# net.SGD(train,50,)
 
 
