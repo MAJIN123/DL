@@ -11,6 +11,7 @@ import mnist_loader
 import matplotlib.pyplot as plt
 import json
 import sys
+import time
 
 
 def sigmoid(z):
@@ -116,6 +117,11 @@ class Network(object):
         if evaluation_data: n_data = len(evaluation_data)
         n = len(train)
 
+        x, X = [], []
+        # plt.ion()
+        # plt.title(str(eta) + 'eta')
+        # plt.figure(1)
+
         for j in xrange(epochs):
             random.shuffle(train)
             mini_batches = [train[i:i + mini_batch_size] for i in range(0, n, mini_batch_size)]
@@ -125,6 +131,14 @@ class Network(object):
             if monitor_training_cost:
                 cost = self.total_cost(train, lmbda)
                 train_cost.append(cost)
+
+                x.append(j + 1)
+                X.append(cost)
+                # plt.plot(x, X, '-r')
+                # plt.draw()  # 注意此函数需要调用
+                # # plt.pause(0.01)
+                # time.sleep(0.01)
+
                 print "Cost on training data: {}".format(cost)
             if monitor_training_accuracy:
                 accuracy = self.accuracy(train, convert=True)
@@ -138,8 +152,9 @@ class Network(object):
                 accuracy = self.accuracy(evaluation_data)
                 evaluation_accuracy.append(accuracy)
                 print "Accuracy on evaluation data: {} / {}".format(self.accuracy(evaluation_data), n_data)
+
             print
-        return evaluation_cost, evaluation_accuracy, train_cost, train_accuracy
+        return x, X
 
     def total_cost(self, data, lmbda, convert=False):
         cost = 0.0
@@ -190,10 +205,37 @@ def vectorized_result(j):
 
 
 train, val, test = mnist_loader.load_data_wrapper()
-net = Network([784, 30, 10])
-ec, ea, tc, ta = net.SGD(train, 30, 10, 0.5, lmbda=5.0,
-                         evaluation_data=val,
-                         monitor_evaluation_cost=True,
-                         monitor_evaluation_accuracy=True,
-                         monitor_training_cost=True,
-                         monitor_training_accuracy=True)
+
+net1 = Network([784, 30, 10])
+x, X = net1.SGD(train[:1000], 30, 10, 0.25, lmbda=2.5,
+                evaluation_data=val,
+                monitor_evaluation_cost=False,
+                monitor_evaluation_accuracy=False,
+                monitor_training_cost=True,
+                monitor_training_accuracy=False)
+# plt.ion()
+plt.title('eta')
+plt.plot(x, X, 'c-o', label='eta:0.25', linewidth=1, color='red')
+# plt.show()
+
+net2 = Network([784, 30, 10])
+b, B = net2.SGD(train[:1000], 30, 10, 0.5, lmbda=2.5,
+                evaluation_data=val,
+                monitor_evaluation_cost=False,
+                monitor_evaluation_accuracy=False,
+                monitor_training_cost=True,
+                monitor_training_accuracy=False)
+
+plt.plot(b, B, 'r-o', label='eta:0.5', linewidth=1, color='blue')
+# plt.show()
+
+net3 = Network([784, 30, 10])
+c, C = net3.SGD(train[:1000], 30, 10, 2.5, lmbda=2.5,
+                evaluation_data=val,
+                monitor_evaluation_cost=False,
+                monitor_evaluation_accuracy=False,
+                monitor_training_cost=True,
+                monitor_training_accuracy=False)
+
+plt.plot(c, C, 'b-o', label='eta:2.5', linewidth=1, color='black')
+plt.show()

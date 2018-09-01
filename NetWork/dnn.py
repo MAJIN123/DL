@@ -8,6 +8,7 @@
 import numpy as np
 import random
 import mnist_loader
+import time
 
 import matplotlib.pyplot as plt
 
@@ -48,6 +49,8 @@ class Network(object):
         n = len(training_data)
 
         x,X= [],[]
+        plt.ion()
+        plt.figure(1)
 
         for j in xrange(epochs):
             random.shuffle(training_data)
@@ -61,8 +64,11 @@ class Network(object):
 
             x.append(j+1)
             X.append(self.loss(training_data))
-        plt.plot(x,X)
-        plt.show()
+            plt.plot(x,X)
+            plt.draw()  # 注意此函数需要调用
+            plt.pause(0.01)
+            # time.sleep(0.01)
+        # plt.show()
 
     def evaluate(self, test_data):
         test_results = [(np.argmax(self.feedforword(x)), y) for x, y in test_data]
