@@ -34,8 +34,8 @@ num_classes = y_test.shape[1]
 def baseline_model():
     # create model
     model = Sequential()
-    model.add(Dense(num_pixels, input_dim=num_pixels, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
+    model.add(Dense(num_pixels, input_dim=num_pixels, kernel_initializer='normal', activation='sigmoid'))
+    model.add(Dense(num_classes, kernel_initializer='normal', activation='sigmoid'))
     # Compile model
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
