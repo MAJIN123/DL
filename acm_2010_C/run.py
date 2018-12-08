@@ -49,16 +49,14 @@ def C_Tracking_Bio_bots(in_file, out_file):
                 if (cur_wall == right_wall and old_wall == top_wall) or (
                         cur_wall == top_wall and old_wall == right_wall):
                     continue
-                if cur_wall.xmin < old_wall.xmin and old_wall.xmin <= cur_wall.xmax:
-                    if old_wall.ymin < cur_wall.ymin and cur_wall.ymin <= old_wall.ymax:
+                if cur_wall.xmin < old_wall.xmin <= cur_wall.xmax:
+                    if old_wall.ymin < cur_wall.ymin <= old_wall.ymax:
                         walls_list.append(Rect(cur_wall.xmin, old_wall.xmin, cur_wall.ymin, old_wall.ymin))
-                if old_wall.xmin < cur_wall.xmin and cur_wall.xmin <= old_wall.xmax:
-                    if cur_wall.ymin < old_wall.ymin and old_wall.ymin <= cur_wall.ymax:
+                if old_wall.xmin < cur_wall.xmin <= old_wall.xmax:
+                    if cur_wall.ymin < old_wall.ymin <= cur_wall.ymax:
                         walls_list.append(Rect(old_wall.xmin, cur_wall.xmin, old_wall.ymin, cur_wall.ymin))
             idx += 1
         new_wall_area = union_(walls_list)
-        print(wallArea)
-        print(new_wall_area)
         fw.write("Case %d：%d\n" % (nCase, new_wall_area - wallArea))
         nCase += 1
     fw.close()
@@ -82,7 +80,7 @@ def union_(walls):
             new_walls = []
             for i in range(len(n_walls)):
                 new_wall = n_walls[i].intersect(taken)
-                if new_wall != None:
+                if new_wall is not None:
                     new_walls.append(new_wall)
             area += union_(n_walls)
             area -= union_(new_walls)
