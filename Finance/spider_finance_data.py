@@ -7,7 +7,7 @@
 
 from bs4 import BeautifulSoup
 import urllib
-import requests, re,time
+import requests, re, time
 
 
 def get_html(url):
@@ -39,10 +39,14 @@ def get_fin_tabs(soup):
 
 
 def get_text(soup):
+    tag = soup.find('h1')
     tag_1 = soup.find('div', class_=re.compile('article'), id=re.compile('artibody'))
+    if tag and tag_1:
+        print('<title>' + tag.get_text().encode('utf8'))
+
     if tag_1:
         for t in tag_1.find_all('p'):
-            #fout.write(t.get_text())
+            # fout.write(t.get_text())
             text = t.get_text().encode('utf8')
             if text is not '\n':
                 print(text)
@@ -54,7 +58,7 @@ def get_all_text(link_list):
             html_doc = get_html(url)
             soup = BeautifulSoup(html_doc, 'html5lib')
             get_text(soup)
-            #print('\n')
+            # print('\n')
         except:
             pass
 
@@ -69,5 +73,5 @@ link_list = get_fin_tabs(soup)
 # fout = open(out_file, 'w+')
 get_all_text(link_list)
 end = time.time()
-#print('the code took %s (s)' % int(end - start))
+# print('the code took %s (s)' % int(end - start))
 # print(len(link_list))
